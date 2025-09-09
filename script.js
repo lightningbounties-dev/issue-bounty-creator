@@ -10,11 +10,9 @@ const settingsSection = document.getElementById('settings-section');
 const userContextInput = document.getElementById('user-context');
 const todoToggle = document.getElementById('todo-toggle');
 
-// This script expects GEMINI_API_KEY to be defined in config.js
-if (typeof GEMINI_API_KEY === 'undefined') {
-    displayError("API Key not found. Please make sure config.js is loaded and contains your GEMINI_API_KEY.");
-}
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${GEMINI_API_KEY}`;
+// IMPORTANT: This URL will be the trigger URL of your deployed Cloud Function.
+// You will need to replace this placeholder after you deploy it for the first time.
+const CLOUD_FUNCTION_URL = 'YOUR_CLOUD_FUNCTION_TRIGGER_URL_HERE'; 
 
 toggleSettingsBtn.addEventListener('click', () => {
     settingsSection.classList.toggle('hidden');
@@ -52,75 +50,27 @@ form.addEventListener('submit', async (e) => {
 });
 
 async function getAiSuggestions(repoUrl, userContext, scanTodos) {
-    const systemPrompt = `You are an expert software developer creating a public bounty for an open-source project. Your tone should be professional, clear, and encouraging to attract contributors. 
-        Your task is to analyze a public GitHub repository and identify potential areas for improvement that can be turned into actionable tasks.`;
     
-    let userQuery = `Analyze the GitHub repository at this URL: ${repoUrl}. 
-        Based on the repository's README, file structure, and overall purpose, generate up to 5 concrete suggestions for improvement.`;
-
-    if (scanTodos) {
-        userQuery += `\n\nAdditionally, scan the codebase for comments like "// TODO:" or "// FIXME:" and convert them into formal issues. Prioritize these TODO-based issues in the list.`;
-    }
-
-    if (userContext) {
-        userQuery += `\n\nPay special attention to the following user goal: "${userContext}". The suggestions should be tailored to help achieve this goal.`;
-    }
-    
-    userQuery += `\n\nFor each suggestion, provide a clear title and a detailed description. The description must be in Markdown and formatted exactly like this:
-        
-        ### Problem
-        A clear and concise explanation of the problem or the area for improvement.
-        
-        ### Proposed Solution
-        A detailed, step-by-step guide on how to implement the solution. Be specific.
-        
-        ### Required Technologies
-        A list of any specific libraries, frameworks, or technologies a developer might need to complete this task. If none, state "None".
-
-        Finally, provide a 'type' ('improvement', 'vulnerability', 'feature', 'todo') and an array of 2-3 relevant 'tags' (e.g., 'Refactor', 'Frontend', 'Security').`;
-
     const payload = {
-        systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [{ parts: [{ text: userQuery }] }],
-        generationConfig: {
-            responseMimeType: "application/json",
-            responseSchema: {
-                type: "ARRAY",
-                items: {
-                    type: "OBJECT",
-                    properties: {
-                        "title": { "type": "STRING" },
-                        "description": { "type": "STRING" },
-                        "tags": { "type": "ARRAY", "items": { "type": "STRING" } },
-                        "type": { "type": "STRING", "enum": ["improvement", "vulnerability", "feature", "todo"] }
-                    },
-                    required: ["title", "description", "tags", "type"]
-                }
-            }
-        }
+        repoUrl,
+        userContext,
+        scanTodos
     };
 
-    const response = await fetch(GEMINI_API_URL, {
+    const response = await fetch(CLOUD_FUNCTION_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
     });
 
     if (!response.ok) {
-        const errorBody = await response.json();
-        console.error("API Error:", errorBody);
+        const errorText = await response.text();
+        console.error("Cloud Function Error:", errorText);
         throw new Error(`API request failed with status ${response.status}`);
     }
 
-    const result = await response.json();
-    
-    if (!result.candidates || !result.candidates[0].content || !result.candidates[0].content.parts[0].text) {
-        console.error("Unexpected API response structure:", result);
-        throw new Error("Could not parse AI suggestions from the API response.");
-    }
-    
-    const jsonText = result.candidates[0].content.parts[0].text;
-    return JSON.parse(jsonText);
+    // The cloud function now returns the JSON directly
+    return await response.json();
 }
 
 function displayError(message) {
@@ -174,7 +124,7 @@ function displayIssues(repoUrl, issues) {
     // Create and append issue cards
     issues.forEach(issue => {
         // Add "TODO" tag if the issue type is 'todo' and it's not already present
-        if (issue.type === 'todo' && !issue.tags.includes('TODO')) {
+        if (issue.type === 'todo' && !issue.tags.some(tag => tag.toLowerCase() === 'todo')) {
             issue.tags.unshift('TODO');
         }
         const tagsHtml = issue.tags.map(tag => `<span class="text-xs font-medium mr-2 px-2.5 py-1 rounded-full ${getTagColor(tag)}">${tag}</span>`).join('');
@@ -184,10 +134,8 @@ function displayIssues(repoUrl, issues) {
         const issueBody = encodeURIComponent(issue.description);
         const newIssueUrl = `https://github.com/${repoName}/issues/new?title=${issueTitle}&body=${issueBody}`;
         
-        // Super simple markdown to HTML for display
-        const descriptionHtml = issue.description
-            .replace(/### (.*)/g, '<h4 class="text-md font-semibold text-slate-800 mt-4 mb-2">$1</h4>')
-            .replace(/\n/g, '<br>');
+        // CHANGE THIS: Use marked.parse() to convert Markdown to HTML
+        const descriptionHtml = marked.parse(issue.description);
 
         const card = `
             <div class="bg-white rounded-lg shadow-md overflow-hidden transition-all hover:shadow-xl">
@@ -199,7 +147,8 @@ function displayIssues(repoUrl, issues) {
                             <div class="mt-2 mb-4">
                                 ${tagsHtml}
                             </div>
-                            <div class="text-slate-600 text-sm leading-relaxed">${descriptionHtml}</div>
+                            <!-- CHANGE THIS: Add a 'prose' class for styling -->
+                            <div class="prose text-slate-600 text-sm leading-relaxed">${descriptionHtml}</div>
                         </div>
                     </div>
                      <div class="mt-6 flex justify-end">
@@ -218,3 +167,5 @@ function displayIssues(repoUrl, issues) {
 
     issuesContainer.classList.remove('hidden');
 }
+
+

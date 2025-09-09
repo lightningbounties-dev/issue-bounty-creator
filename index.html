@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <!-- ADD THIS SCRIPT for Markdown Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
 
@@ -53,7 +55,8 @@
                             <p class="text-xs text-slate-500 mt-1">Create issues from `// TODO:` comments found in the code.</p>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="todo-toggle">
+                            <!-- CHANGE THIS LINE: Add the 'checked' attribute -->
+                            <input type="checkbox" id="todo-toggle" checked>
                             <span class="slider"></span>
                         </label>
                     </div>
