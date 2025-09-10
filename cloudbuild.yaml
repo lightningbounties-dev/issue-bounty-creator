@@ -33,3 +33,7 @@ substitutions:
   _GCS_BUCKET_NAME: 'your-gcs-bucket-name' # Replace with your bucket name
   _GEMINI_API_KEY: '' # This will be populated from Secret Manager
 
+# Add this options block to resolve the logging error
+options:
+  logging: CLOUD_LOGGING_ONLY
+
