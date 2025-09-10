@@ -1,5 +1,5 @@
 steps:
-  # 1. Deploy the Cloud Function
+  # 1. Deploy the Cloud Function (as a private function)
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
     args:
       - gcloud
@@ -9,9 +9,8 @@ steps:
       - --source=./cloud-function
       - --trigger-http
       - --runtime=nodejs18
-      - --allow-unauthenticated
       - --entry-point=getAiSuggestions
-      - --region=us-central1 # You can change this to your preferred region
+      - --region=us-central1
       - --set-env-vars=GEMINI_API_KEY=${_GEMINI_API_KEY}
     id: 'Deploy Cloud Function'
 
@@ -25,15 +24,13 @@ steps:
       - 'script.js'
       - 'style.css'
       - 'assets'
-      - 'gs://${_GCS_BUCKET_NAME}/' # Note the trailing slash
+      - 'gs://${_GCS_BUCKET_NAME}/'
     id: 'Deploy Static Assets'
 
-# You will set these variables in the Cloud Build Trigger settings
 substitutions:
-  _GCS_BUCKET_NAME: 'your-gcs-bucket-name' # Replace with your bucket name
-  _GEMINI_API_KEY: '' # This will be populated from Secret Manager
+  _GCS_BUCKET_NAME: 'your-gcs-bucket-name'
+  _GEMINI_API_KEY: ''
 
-# Add this options block to resolve the logging error
 options:
   logging: CLOUD_LOGGING_ONLY
 
