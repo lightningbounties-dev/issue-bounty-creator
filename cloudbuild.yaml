@@ -9,6 +9,7 @@ steps:
       - --source=./cloud-function
       - --trigger-http
       - --runtime=nodejs18
+      - --gen=1 # ADD THIS FLAG to force 1st Gen deployment
       - --allow-unauthenticated
       - --entry-point=getAiSuggestions
       - --region=us-central1 # You can change this to your preferred region
