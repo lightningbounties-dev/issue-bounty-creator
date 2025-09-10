@@ -12,7 +12,8 @@ const todoToggle = document.getElementById('todo-toggle');
 
 // IMPORTANT: This URL will be the trigger URL of your deployed Cloud Function.
 // You will need to replace this placeholder after you deploy it for the first time.
-const CLOUD_FUNCTION_URL = 'YOUR_CLOUD_FUNCTION_TRIGGER_URL_HERE'; 
+//const CLOUD_FUNCTION_URL = 'YOUR_CLOUD_FUNCTION_TRIGGER_URL_HERE'; 
+const CLOUD_FUNCTION_URL = 'https://us-central1-lab-lb-467711.cloudfunctions.net/getAiSuggestions';
 
 toggleSettingsBtn.addEventListener('click', () => {
     settingsSection.classList.toggle('hidden');
