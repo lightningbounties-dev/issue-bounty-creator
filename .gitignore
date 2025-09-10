@@ -1,5 +1,0 @@
-Ignore the configuration file containing the API key
-config.js
-
-Ignore node modules, often used in web development
-node_modules/
